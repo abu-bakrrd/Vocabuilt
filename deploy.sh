@@ -18,16 +18,24 @@ echo "🐘 Setting up PostgreSQL database..."
 DB_NAME="vocabuilt"
 DB_USER="vocabuilt_user"
 
+# Ensure PostgreSQL is running
+echo "⚙️ Starting PostgreSQL service..."
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
 # Ask for DB password
 read -sp "Enter a password for the database user ($DB_USER): " DB_PASSWORD
 echo
 
 # Run SQL commands as postgres user to create DB and User locally on VPS
+# We move to /tmp first because the postgres user cannot access /root directory
 echo "🛠️ Creating local database and user in PostgreSQL..."
+cd /tmp
 sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;" || echo "⚠️ Database already exists"
 sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';" || echo "⚠️ User already exists"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
 sudo -u postgres psql -c "ALTER DATABASE $DB_NAME OWNER TO $DB_USER;"
+cd - > /dev/null
 echo "✅ Local PostgreSQL setup finished."
 
 # 3. Setup Project
