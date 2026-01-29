@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class VocabularyBot:
     def __init__(self):
-        self.token = '8261061039:AAGQ_QDDqLVFmMVR5JZt_awxNDXENGepoA8'
+        self.token = os.environ.get('TELEGRAM_BOT_TOKEN', '8261061039:AAGQ_QDDqLVFmMVR5JZt_awxNDXENGepoA8')
         if not self.token:
             raise ValueError("TELEGRAM_BOT_TOKEN environment variable is required")
         

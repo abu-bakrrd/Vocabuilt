@@ -19,7 +19,10 @@ app.secret_key = os.environ.get("SESSION_SECRET", "your-secret-key-here")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database
-app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://vocabuilt_user:yJq8xhV3JeDRy6jNPB7geDur8SdW3vgS@dpg-d24cm0re5dus73c137vg-a.oregon-postgres.render.com/vocabuilt'
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", 
+    'sqlite:///vocabuilt.db'
+)
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -29,7 +32,12 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db.init_app(app)
 
 # Import routes after app creation to avoid circular imports
-from web.routes import *
+try:
+    from web.routes import *
+    logger.info("Web routes loaded successfully")
+except ImportError:
+    # If the web module is missing (e.g., bot-only mode), just log it
+    logger.warning("Web module not found, running in bot-only mode")
 
 with app.app_context():
     # Import models to ensure tables are created
