@@ -22,6 +22,9 @@ DB_USER="vocabuilt_user"
 echo "⚙️ Starting PostgreSQL service..."
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
+echo "⏳ Waiting for PostgreSQL to initialize..."
+sleep 5
+sudo systemctl status postgresql --no-pager
 
 # Ask for DB password
 read -sp "Enter a password for the database user ($DB_USER): " DB_PASSWORD
