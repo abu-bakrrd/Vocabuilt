@@ -20,11 +20,25 @@ DB_USER="vocabuilt_user"
 
 # Ensure PostgreSQL is running
 echo "⚙️ Starting PostgreSQL service..."
-sudo systemctl start postgresql
+sudo systemctl restart postgresql
 sudo systemctl enable postgresql
-echo "⏳ Waiting for PostgreSQL to initialize..."
-sleep 5
-sudo systemctl status postgresql --no-pager
+
+# Wait for PostgreSQL to actually start (wait for socket)
+echo "⏳ Waiting for PostgreSQL socket to become available..."
+for i in {1..10}; do
+    if [ -S /var/run/postgresql/.s.PGSQL.5432 ]; then
+        echo "✅ PostgreSQL socket found!"
+        break
+    fi
+    echo "...waiting ($i/10)"
+    sleep 2
+done
+
+if [ ! -S /var/run/postgresql/.s.PGSQL.5432 ]; then
+    echo "❌ PostgreSQL failed to start properly. Checking logs..."
+    sudo journalctl -u postgresql -n 20
+    exit 1
+fi
 
 # Ask for DB password
 read -sp "Enter a password for the database user ($DB_USER): " DB_PASSWORD
