@@ -20,6 +20,12 @@ if [ "$EUID" -ne 0 ]; then
   echo "💡 You are not running as root. This script will use sudo for system tasks."
 fi
 
+# Fix localhost resolution if broken (common on some VPS)
+if ! grep -q "localhost" /etc/hosts; then
+    echo "🔧 Fixing localhost resolution in /etc/hosts..."
+    echo "127.0.0.1 localhost" | sudo tee -a /etc/hosts
+fi
+
 # 1. Update system and install dependencies
 echo "📦 Updating system packages..."
 sudo apt-get update -y
@@ -116,7 +122,7 @@ else
 
     cat > .env << EOF
 TELEGRAM_BOT_TOKEN=$BOT_TOKEN
-DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME
+DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@127.0.0.1:5432/$DB_NAME
 SESSION_SECRET=$(openssl rand -hex 24)
 EOF
     echo "✅ .env file created."
