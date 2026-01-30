@@ -10,6 +10,11 @@ echo "=========================================="
 echo "   🚀 VOCABUILT AUTOMATED SETUP   "
 echo "=========================================="
 
+# Cleanup old logs and temp files
+echo "🧹 Cleaning up old temporary files..."
+rm -f *.log
+sudo find /tmp -name ".s.PGSQL.*" -mtime +1 -delete 2>/dev/null || true
+
 # Check if already running as root
 if [ "$EUID" -ne 0 ]; then
   echo "💡 You are not running as root. This script will use sudo for system tasks."
@@ -25,24 +30,44 @@ echo "🐘 Setting up PostgreSQL database..."
 DB_NAME="vocabuilt"
 DB_USER="vocabuilt_user"
 
-# Ensure PostgreSQL is running
-echo "⚙️ Starting PostgreSQL service..."
-sudo systemctl restart postgresql
+# Ensure PostgreSQL core service is enabled
 sudo systemctl enable postgresql
+
+# Diagnostic: check for clusters and start them
+echo "⚙️ Checking for PostgreSQL clusters..."
+if ! pg_lsclusters | grep -q "online"; then
+    echo "⚠️ No online clusters found. Attempting to start/create..."
+    # Try to start any existing but down clusters
+    sudo pg_ctlcluster 14 main start || true
+    
+    # If it still doesn't exist, try to create it (only if pg_lsclusters is empty)
+    if [ "$(pg_lsclusters | wc -l)" -le 1 ]; then
+        echo "🔨 No clusters found. Creating default cluster..."
+        sudo pg_createcluster 14 main --start || true
+    fi
+fi
+
+# Ensure the specific 14-main service is active (typical for Ubuntu 22.04)
+sudo systemctl start postgresql@14-main || true
 
 # Wait for PostgreSQL to actually start (wait for socket)
 echo "⏳ Waiting for PostgreSQL socket to become available..."
-for i in {1..10}; do
+SOCKET_FOUND=false
+for i in {1..15}; do
+    # Check common socket locations
     if [ -S /var/run/postgresql/.s.PGSQL.5432 ]; then
         echo "✅ PostgreSQL socket found!"
+        SOCKET_FOUND=true
         break
     fi
-    echo "...waiting ($i/10)"
+    echo "...waiting ($i/15)"
     sleep 2
 done
 
-if [ ! -S /var/run/postgresql/.s.PGSQL.5432 ]; then
-    echo "❌ PostgreSQL failed to start properly. Checking logs..."
+if [ "$SOCKET_FOUND" = false ]; then
+    echo "❌ PostgreSQL failed to start properly."
+    echo "🛠️ Diagnostic info:"
+    pg_lsclusters
     sudo journalctl -u postgresql -n 20
     exit 1
 fi

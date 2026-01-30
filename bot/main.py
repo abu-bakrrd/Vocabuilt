@@ -13,8 +13,7 @@ from models import User, Word, QuizSession
 from bot.handlers import BotHandlers
 from utils.translator import Translator
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Logger is already configured in app.py
 logger = logging.getLogger(__name__)
 
 class VocabularyBot:
