@@ -73,9 +73,10 @@ class VocabularyBot:
         try:
             # Test bot connection first
             bot_info = self.bot.get_me()
-            logger.info(f"Bot connected: @{bot_info.username}")
+            logger.info(f"Bot connected successfully as @{bot_info.username}")
             
-            self.bot.infinity_polling(timeout=10, long_polling_timeout=5)
+            logger.info("Starting infinity polling...")
+            self.bot.infinity_polling(timeout=20, long_polling_timeout=10)
         except Exception as e:
             logger.error(f"Bot error: {e}")
             raise

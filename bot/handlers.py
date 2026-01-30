@@ -37,6 +37,7 @@ class BotHandlers:
     
     def handle_start(self, message):
         """Handle /start command"""
+        logger.info(f"User {message.from_user.id} (@{message.from_user.username}) started the bot")
         user = self.get_or_create_user(message.from_user)
         welcome_text = (
             f"🎯 Welcome to Vocabulary Bot, {user.username}!\n\n"
@@ -80,6 +81,7 @@ class BotHandlers:
             return
         
         word = message.text.strip().lower()
+        logger.info(f"User {message.from_user.id} requested translation for: '{word}'")
         
         # Get translation
         translation = self.translator.translate(word)
@@ -164,8 +166,12 @@ class BotHandlers:
                 user = self.get_or_create_user(call.from_user)
                 
                 if data.startswith('add_word:'):
+                    word_to_add = data.split(':', 2)[1]
+                    logger.info(f"User {call.from_user.id} adding word: '{word_to_add}'")
                     self._handle_add_word(call, user, data)
                 elif data.startswith('quiz:'):
+                    quiz_type = data.split(':')[1]
+                    logger.info(f"User {call.from_user.id} starting quiz type: {quiz_type}")
                     self._handle_quiz_start(call, user, data)
                 elif data.startswith('answer:'):
                     self._handle_quiz_answer(call, user, data)

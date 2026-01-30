@@ -6,12 +6,19 @@
 # Exit on error
 set -e
 
-echo "🚀 Starting Vocabuilt automated installation..."
+echo "=========================================="
+echo "   🚀 VOCABUILT AUTOMATED SETUP   "
+echo "=========================================="
+
+# Check if already running as root
+if [ "$EUID" -ne 0 ]; then
+  echo "💡 You are not running as root. This script will use sudo for system tasks."
+fi
 
 # 1. Update system and install dependencies
 echo "📦 Updating system packages..."
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y python3-pip python3-venv git postgresql postgresql-contrib libpq-dev
+sudo apt-get update -y
+sudo apt-get install -y python3-pip python3-venv git postgresql postgresql-contrib libpq-dev openssl
 
 # 2. Setup PostgreSQL
 echo "🐘 Setting up PostgreSQL database..."
@@ -70,16 +77,20 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # 4. Create .env file
-echo "🔑 Configuring environment variables..."
-read -p "Enter your Telegram Bot Token: " BOT_TOKEN
+if [ -f .env ]; then
+    echo "⚠️ .env file already exists. Skipping creation to preserve settings."
+    echo "💡 If you need to reconfigure, delete the .env file and run this script again."
+else
+    echo "🔑 Configuring environment variables..."
+    read -p "Enter your Telegram Bot Token: " BOT_TOKEN
 
-cat > .env << EOF
+    cat > .env << EOF
 TELEGRAM_BOT_TOKEN=$BOT_TOKEN
 DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME
 SESSION_SECRET=$(openssl rand -hex 24)
 EOF
-
-echo "✅ .env file created."
+    echo "✅ .env file created."
+fi
 
 # 5. Create Systemd Service
 echo "⚙️ Creating systemd service..."

@@ -49,6 +49,7 @@ class QuizManager:
                 }
                 
                 # Start first question
+                logger.info(f"Quiz started for user {user_id} (type: {quiz_type}, questions: {quiz_session.total_questions})")
                 self._send_poll_question(chat_id, quiz_session, words)
                 
                 return quiz_session.id
@@ -233,6 +234,7 @@ class QuizManager:
             
             # Calculate percentage
             percentage = (quiz_session.score / quiz_session.total_questions) * 100
+            logger.info(f"Quiz finished for user {quiz_session.user_id}: score {quiz_session.score}/{quiz_session.total_questions} ({percentage:.0f}%)")
             
             # Determine performance message
             if percentage >= 90:

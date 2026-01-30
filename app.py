@@ -41,5 +41,10 @@ except ImportError:
 
 with app.app_context():
     # Import models to ensure tables are created
-    import models
-    db.create_all()
+    try:
+        import models
+        logger.info("Database models imported successfully")
+        db.create_all()
+        logger.info("Database tables verified/created successfully")
+    except Exception as e:
+        logger.error(f"Critical error during database initialization: {e}")
