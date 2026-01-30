@@ -22,6 +22,9 @@ class VocabularyBot:
         if not self.token:
             raise ValueError("TELEGRAM_BOT_TOKEN environment variable is required")
         
+        # Enable middleware before initializing TeleBot
+        telebot.apihelper.ENABLE_MIDDLEWARE = True
+        
         self.bot = telebot.TeleBot(self.token)
         self.translator = Translator()
         self.handlers = BotHandlers(self.bot, self.translator)
