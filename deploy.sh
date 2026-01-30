@@ -35,26 +35,30 @@ sudo systemctl enable postgresql
 
 # Diagnostic: check for clusters and start them
 echo "⚙️ Checking for PostgreSQL clusters..."
-if ! pg_lsclusters | grep -q "online"; then
-    echo "⚠️ No online clusters found. Attempting to start/create..."
-    # Try to start any existing but down clusters
+pg_lsclusters
+
+# If cluster exists but is down, try to start it
+if pg_lsclusters | grep -q "14.*main.*down"; then
+    echo "⚠️ Cluster '14 main' is down. Attempting to start..."
     sudo pg_ctlcluster 14 main start || true
-    
-    # If it still doesn't exist, try to create it (only if pg_lsclusters is empty)
-    if [ "$(pg_lsclusters | wc -l)" -le 1 ]; then
-        echo "🔨 No clusters found. Creating default cluster..."
-        sudo pg_createcluster 14 main --start || true
-    fi
 fi
 
-# Ensure the specific 14-main service is active (typical for Ubuntu 22.04)
+# If it's STILL not online, we use the "Nuclear Option"
+if ! pg_lsclusters | grep -q "14.*main.*online"; then
+    echo "🚀 Using the 'Nuclear Option': Dropping and recreating cluster..."
+    sudo pg_dropcluster 14 main --stop || true
+    echo "🔨 Recreating cluster with C.UTF-8 locale..."
+    sudo pg_createcluster 14 main --start --locale C.UTF-8 || true
+fi
+
+# Ensure the specific service is active
 sudo systemctl start postgresql@14-main || true
 
 # Wait for PostgreSQL to actually start (wait for socket)
 echo "⏳ Waiting for PostgreSQL socket to become available..."
 SOCKET_FOUND=false
 for i in {1..15}; do
-    # Check common socket locations
+    # Check common socket location
     if [ -S /var/run/postgresql/.s.PGSQL.5432 ]; then
         echo "✅ PostgreSQL socket found!"
         SOCKET_FOUND=true
@@ -68,7 +72,8 @@ if [ "$SOCKET_FOUND" = false ]; then
     echo "❌ PostgreSQL failed to start properly."
     echo "🛠️ Diagnostic info:"
     pg_lsclusters
-    sudo journalctl -u postgresql -n 20
+    echo "📝 Last 20 lines of Postgres log:"
+    sudo tail -n 20 /var/log/postgresql/postgresql-14-main.log || true
     exit 1
 fi
 
