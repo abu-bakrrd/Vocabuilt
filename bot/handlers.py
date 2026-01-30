@@ -33,6 +33,7 @@ class BotHandlers:
                 )
                 db.session.add(user)
                 db.session.commit()
+                db.session.refresh(user)
             return user
     
     def handle_start(self, message):
@@ -75,26 +76,27 @@ class BotHandlers:
     
     def handle_text_message(self, message):
         """Handle regular text messages (word translation requests)"""
-        if message.chat.id in self.quiz_manager.active_quizzes:
-
-            # If user is in an active quiz, let quiz manager handle it
-            return
-        
-        word = message.text.strip().lower()
-        logger.info(f"User {message.from_user.id} requested translation for: '{word}'")
-        
-        # Get translation
-        translation = self.translator.translate(word)
-        
-        if translation:
-            # Send translation with "Add to Dictionary" button
-            markup = self.buttons.add_to_dictionary_button(word, translation)
-            response = f"🔤 **{word.title()}**\n📖 {translation}"
-            self.bot.send_message(message.chat.id, response, 
-                                reply_markup=markup, parse_mode='Markdown')
-        else:
-            self.bot.send_message(message.chat.id, 
-                                "❌ Sorry, I couldn't find a translation for that word.")
+        from app import app
+        with app.app_context():
+            if message.chat.id in self.quiz_manager.active_quizzes:
+                # If user is in an active quiz, let quiz manager handle it
+                return
+            
+            word = message.text.strip().lower()
+            logger.info(f"User {message.from_user.id} requested translation for: '{word}'")
+            
+            # Get translation
+            translation = self.translator.translate(word)
+            
+            if translation:
+                # Send translation with "Add to Dictionary" button
+                markup = self.buttons.add_to_dictionary_button(word, translation)
+                response = f"🔤 **{word.title()}**\n📖 {translation}"
+                self.bot.send_message(message.chat.id, response, 
+                                    reply_markup=markup, parse_mode='Markdown')
+            else:
+                self.bot.send_message(message.chat.id, 
+                                    "❌ Sorry, I couldn't find a translation for that word.")
     
     def handle_test(self, message):
         """Handle /test command"""
@@ -239,7 +241,7 @@ class BotHandlers:
         # Start quiz session
         quiz_session_id = self.quiz_manager.start_quiz(call.message.chat.id, user.id, quiz_type)
         if quiz_session_id:
-            self.active_quizzes[call.message.chat.id] = QuizSession.query.get(quiz_session_id)
+            # Note: sessions are managed within quiz_manager.active_quizzes
             self.bot.edit_message_text(
                 "🎯 Starting quiz...",
                 call.message.chat.id,

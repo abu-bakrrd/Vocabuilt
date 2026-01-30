@@ -228,40 +228,40 @@ class QuizManager:
     
     def _finish_quiz(self, chat_id, quiz_session):
         """Finish the quiz and show results"""
-        try:
-            quiz_session.completed = True
-            db.session.commit()
-            
-            # Calculate percentage
-            percentage = (quiz_session.score / quiz_session.total_questions) * 100
-            logger.info(f"Quiz finished for user {quiz_session.user_id}: score {quiz_session.score}/{quiz_session.total_questions} ({percentage:.0f}%)")
-            
-            # Determine performance message
-            if percentage >= 90:
-                performance = "🏆 Excellent!"
-            elif percentage >= 70:
-                performance = "👏 Great job!"
-            elif percentage >= 50:
-                performance = "👍 Good work!"
-            else:
-                performance = "💪 Keep practicing!"
-            
-            results_text = (
-                f"🎯 **Quiz Complete!**\n\n"
-                f"{performance}\n"
-                f"📊 **Results:**\n"
-                f"✅ Correct: {quiz_session.score}\n"
-                f"❌ Wrong: {quiz_session.total_questions - quiz_session.score}\n"
-                f"📈 Score: {quiz_session.score}/{quiz_session.total_questions} ({percentage:.0f}%)\n\n"
-                f"💡 Keep adding new words and take more quizzes to improve!"
-            )
-            
-            self.bot.send_message(chat_id, results_text, parse_mode='Markdown')
-            
-            # Clean up
-            if chat_id in self.active_quizzes:
-                del self.active_quizzes[chat_id]
-
+        from app import app
+        with app.app_context():
+            try:
+                quiz_session.completed = True
+                db.session.commit()
                 
-        except Exception as e:
-            logger.error(f"Error finishing quiz: {e}")
+                # Calculate percentage
+                percentage = (quiz_session.score / quiz_session.total_questions) * 100
+                logger.info(f"Quiz finished for user {quiz_session.user_id}: score {quiz_session.score}/{quiz_session.total_questions} ({percentage:.0f}%)")
+                
+                # Determine performance message
+                if percentage >= 90:
+                    performance = "🏆 Excellent!"
+                elif percentage >= 70:
+                    performance = "👏 Great job!"
+                elif percentage >= 50:
+                    performance = "👍 Good work!"
+                else:
+                    performance = "💪 Keep practicing!"
+                
+                results_text = (
+                    f"🎯 **Quiz Complete!**\n\n"
+                    f"{performance}\n"
+                    f"📊 **Results:**\n"
+                    f"✅ Correct: {quiz_session.score}\n"
+                    f"❌ Wrong: {quiz_session.total_questions - quiz_session.score}\n"
+                    f"📈 Score: {quiz_session.score}/{quiz_session.total_questions} ({percentage:.0f}%)\n\n"
+                    f"💡 Keep adding new words and take more quizzes to improve!"
+                )
+                
+                self.bot.send_message(chat_id, results_text, parse_mode='Markdown')
+                
+                # Clean up
+                if chat_id in self.active_quizzes:
+                    del self.active_quizzes[chat_id]
+            except Exception as e:
+                logger.error(f"Error finishing quiz: {e}")

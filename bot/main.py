@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class VocabularyBot:
     def __init__(self):
-        self.token = os.environ.get('TELEGRAM_BOT_TOKEN', '8261061039:AAGQ_QDDqLVFmMVR5JZt_awxNDXENGepoA8')
+        self.token = os.environ.get('TELEGRAM_BOT_TOKEN')
         if not self.token:
             raise ValueError("TELEGRAM_BOT_TOKEN environment variable is required")
         
@@ -65,6 +65,10 @@ class VocabularyBot:
         @self.bot.poll_answer_handler(func=lambda poll_answer: True)
         def handle_poll_answer(poll_answer): 
             self.handlers.handle_poll_answer(poll_answer)
+
+        @self.bot.middleware_handler(update_types=['message'])
+        def log_incoming_messages(bot_instance, message):
+            logger.info(f"📩 Incoming message from {message.from_user.id} (@{message.from_user.username}): '{message.text}'")
     
     def run(self):
         """Start the bot"""

@@ -8,6 +8,5 @@ psycopg2-binary>=2.9.10
 pytelegrambotapi>=4.28.0
 python-dotenv>=1.1.1
 sqlalchemy>=2.0.42
-telebot>=0.0.5
 werkzeug>=3.1.3
 langdetect
