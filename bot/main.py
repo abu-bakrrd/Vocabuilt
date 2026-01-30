@@ -74,6 +74,10 @@ class VocabularyBot:
             bot_info = self.bot.get_me()
             logger.info(f"Bot connected successfully as @{bot_info.username}")
             
+            # Remove any existing webhooks to avoid 409 Conflict
+            logger.info("Removing existing webhooks...")
+            self.bot.remove_webhook()
+            
             logger.info("Starting infinity polling...")
             self.bot.infinity_polling(timeout=20, long_polling_timeout=10)
         except Exception as e:
